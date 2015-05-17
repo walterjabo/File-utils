@@ -1,16 +1,21 @@
 package com.wjb.utils.Utils;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.TimeZone;
 
 import com.drew.imaging.ImageMetadataReader;
 import com.drew.imaging.ImageProcessingException;
@@ -24,8 +29,23 @@ public class ExifUtils {
 	static int DATE_TIME_ORIGINAL_TAKEN_PHOTO = 36867;
 	
 	static String[] months = {"Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"};
+	static String[] weekDays = {"Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"};
 	
-	public static void organizePhotos(String pathSourceFolder, String pathTargetFolder)  {
+	static String LOG_PREFIX = "LOG_OUTPUT_";
+	
+	
+	public static File setupLog(String sourceFolder) throws FileNotFoundException {
+		File f = new File(sourceFolder);
+		File logFile = new File(f.getAbsolutePath() + File.separator + LOG_PREFIX + ExifUtils.formatTime("yyyy.MM.dd-HH.mm.ss", "GMT-05")+".txt");
+		System.setOut(new PrintStream(new FileOutputStream(logFile)));
+		System.setErr(new PrintStream(new FileOutputStream(logFile)));
+		return logFile;
+	}
+	
+	public static void organizePhotos(String pathSourceFolder, String pathTargetFolder) throws IOException {
+		organizePhotos(pathSourceFolder, pathTargetFolder, null);
+	}
+	public static void organizePhotos(String pathSourceFolder, String pathTargetFolder, File logFile) throws IOException {
 		
 		File sourceFolder = new File(pathSourceFolder);
 		
@@ -39,7 +59,11 @@ public class ExifUtils {
 		int i = 0;
 		for(File f: files) {
 			i++;
-			if(f.isDirectory()) {
+			if (logFile != null && f.getName().startsWith(LOG_PREFIX)) {
+				continue;
+			}
+			if (f.isDirectory() && !f.getAbsolutePath().endsWith(".") && !f.getAbsolutePath().endsWith("..")) {
+				organizePhotos(f.getAbsolutePath(), pathTargetFolder, logFile);
 				continue;
 			}
 			Date date = null;
@@ -75,8 +99,9 @@ public class ExifUtils {
 				
 				int day = cal.get(Calendar.DAY_OF_MONTH);
 				String strDay = day < 10 ? ("0" + day) : "" + day;
+				int weekDay = cal.get(Calendar.DAY_OF_WEEK);
 				
-				String folder = String.format("/%d/%s_%s/%s/", cal.get(Calendar.YEAR), strMonth, months[month-1], strDay);
+				String folder = String.format("/%d/%s_%s/%s-%s/", cal.get(Calendar.YEAR), strMonth, months[month-1], strDay, weekDays[weekDay - 1]);
 				
 				String newFileName = pathTargetFolder + folder + f.getName();
 				
@@ -87,12 +112,14 @@ public class ExifUtils {
 				
 				try {
 					File newFile = new File(newFileName);
-					if(!newFile.exists()) {
-						Files.move(Paths.get(f.getAbsolutePath()), Paths.get(newFile.getAbsolutePath()), StandardCopyOption.COPY_ATTRIBUTES);
-						System.out.println(i + " de " + files.length + ", " + date + " -> " + newFileName + "... Done...");
+					if (!newFile.exists()) {
+						Files.move(Paths.get(f.getAbsolutePath()), Paths.get(newFile.getAbsolutePath()), StandardCopyOption.ATOMIC_MOVE);
+						System.out.println(i + " de " + files.length + ", " + date + " -> " + newFileName + " DONE");
 					} else {
-						System.out.println(i + " de " + files.length + ", " + newFileName + "... ALREADY EXISTS AND DIDN'T WAS MOVED!...");
+						System.out.println(i + " de " + files.length + ", " + newFileName + " YA EXISTE, NO MOVIDO");
 					}
+//				} catch (UnsupportedOperationException e) {
+//					System.out.println("Error en [" + newFileName + "], " + e.getMessage());
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -141,5 +168,18 @@ public class ExifUtils {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+	
+	public static String formatTime(Date date, String patronFormat, String timeZone) {
+		SimpleDateFormat sdf = new SimpleDateFormat(patronFormat);
+		if (timeZone != null) {
+			sdf.setTimeZone(TimeZone.getTimeZone(timeZone));
+		}
+		return sdf.format(date);
+	}
+	
+	public static String formatTime(String patronFormat, String timeZone) {
+		Calendar cal = GregorianCalendar.getInstance();
+		return formatTime(cal.getTime(), patronFormat, timeZone);
 	}
 }
