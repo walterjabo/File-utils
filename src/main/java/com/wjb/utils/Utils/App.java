@@ -11,8 +11,8 @@ public class App {
 	
 	public static void main(String[] args) throws IOException {
 
-		String sourceFolder = "/Volumes/MEDIA/HC/Nuevas";
-		String targetFolder = "/Volumes/MEDIA/HC";
+		String sourceFolder = "/Volumes/MEDIA/Nueva carpeta/Dakar 2013";
+		String targetFolder = "/Volumes/MEDIA/Fotos-Familia";
 	
 //		Calendar cal = new GregorianCalendar();
 ////		cal.set(Calendar.DAY_OF_MONTH, 16);

@@ -28,6 +28,30 @@
 			<version>3.8.1</version>
 			<scope>test</scope>
 		</dependency>
+		
+		<!-- INICIO Drive -->
+		<dependency>
+			<groupId>com.google.api-client</groupId>
+			<artifactId>google-api-client</artifactId>
+			<version>1.20.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.google.oauth-client</groupId>
+			<artifactId>google-oauth-client-jetty</artifactId>
+			<version>1.20.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.google.apis</groupId>
+			<artifactId>google-api-services-drive</artifactId>
+			<version>v2-rev170-1.20.0</version>
+		</dependency>
+		
+		
+		<!-- FIN Drive -->
+		
+		
 	</dependencies>
 	
 	<build>
@@ -41,6 +65,24 @@
 					<target>1.7</target>
 				</configuration>
 			</plugin>
+			
+			
+			
+			<plugin>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<configuration>
+					<archive>
+						<manifest>
+<!-- 							<mainClass>com.wjb.gdrive.process.DriveAuthorization</mainClass> -->
+							<mainClass>com.wjb.gdrive.services.GDriveService</mainClass>
+						</manifest>
+					</archive>
+					<descriptorRefs>
+						<descriptorRef>jar-with-dependencies</descriptorRef>
+					</descriptorRefs>
+				</configuration>
+			</plugin>
+			
 		</plugins>
 
 	</build>
